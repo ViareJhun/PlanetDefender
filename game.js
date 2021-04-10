@@ -2,7 +2,7 @@
 var surface = document.getElementById('surface');
 var context = surface.getContext('2d');
 
-context.imageSmoothingEnabled = false;
+context.imageSmoothingEnabled = true;
 
 // Utils
 const d1 = 1 / 180 * Math.PI;
@@ -31,6 +31,14 @@ function collide(o1, o2, x, y)
 	);
 }
 
+function distance(x1, y1, x2, y2)
+{
+	return Math.sqrt(
+		(x1 - x2) * (x1 - x2) +
+		(y1 - y2) * (y1 - y2)
+	);
+}
+
 function angleDifference(from, to)
 {
 	return ((((from - to) % d360) + 1.5 * d360) % d360) - d180; 
@@ -56,7 +64,8 @@ function loadTextures()
 {
 	tex_path['cat'] = 'img/neon_cat.png';
 	tex_path['planet'] = 'img/planet.png';
-	tex_path['back1'] = 'img/back1.png'
+	tex_path['back1'] = 'img/back1.png';
+	tex_path['asteroid'] = 'img/asteroid.png';
 	
 	Object.keys(tex_path).forEach(
 		(key) =>
@@ -174,8 +183,9 @@ addEventListener(
 // Game
 var game_state = 'load';
 
+var asteroids = [];
 var defender = [];
-var def_radius = 80;
+var def_radius = 70;
 var main_angle = 0;
 var to_angle = 0;
 var planet = {
@@ -183,8 +193,12 @@ var planet = {
 	'y': surface.height * 0.5,
 	'half_width': 35,
 	'half_height': 35,
+	'radius': 50,
 	'angle': Math.random() * d360
 };
+var as_time_max = 30;
+var as_time = as_time_max;
+var as_speed = 2.0;
 
 function startGame()
 {
@@ -234,12 +248,107 @@ function CreateDefender(side)
 	};
 }
 
+function CreateAsteroid(x, y, dir)
+{
+	this.x = x;
+	this.y = y;
+	
+	this.angle = Math.random() * d360;
+	
+	this.texture = 'asteroid';
+	this.scale = 0.5 + Math.random() * 0.5;
+	
+	this.half_width = 27 * this.scale;
+	this.half_height = 30 * this.scale;
+	
+	this.dir = dir;
+	
+	this.vecx = 0;
+	this.vecy = 0;
+	
+	this.speed = as_speed;
+	
+	this.radius = 5 * this.scale;
+	
+	
+	this.update = () =>
+	{
+		this.angle += 0.04;
+		
+		this.vecx = Math.cos(this.dir) * this.speed;
+		this.vecy = -Math.sin(this.dir) * this.speed;
+		
+		this.x += this.vecx;
+		this.y += this.vecy;
+		
+		if (
+			distance(
+				this.x,
+				this.y,
+				planet.x,
+				planet.y
+			) < this.radius + planet.radius
+		)
+		{
+			return 1;
+		}
+		
+		let resul = 0;
+		defender.forEach(
+			(item) =>
+			{
+				if (
+					collide(
+						this,
+						item,
+						0,
+						0
+					)
+				)
+				{
+					resul = 1;
+				}
+			}
+		);
+		
+		return resul;
+	};
+	
+	this.draw = () =>
+	{
+		context.save();
+		context.translate(
+			this.x,
+			this.y
+		);
+		
+		context.rotate(
+			this.angle
+		);
+		
+		context.scale(
+			this.scale,
+			this.scale
+		);
+		
+		context.drawImage(
+			tex[this.texture],
+			-this.half_width / this.scale,
+			-this.half_height / this.scale
+		);
+		
+		context.restore();
+	};
+}
+
 // Game Update
 function gameUpdate()
 {
+	// defenders
 	defender[0].update();
 	defender[1].update();
 	
+	// input
 	if (mouse_check)
 	{
 		to_angle = pointDirection(
@@ -250,10 +359,65 @@ function gameUpdate()
 		);
 	}
 	
+	/*
+	if (Math.abs(main_angle - to_angle) >= d1 * 10)
+	{
+		main_angle += Math.sign(angleDifference(
+			to_angle,
+			main_angle
+		)) * d1 * 5;
+	}
+	else
+	{
+		main_angle = to_angle;
+	}
+	*/
 	main_angle += angleDifference(
 		to_angle,
 		main_angle
-	) * 0.2;
+	) * 0.1;
+	
+	// asteroids
+	asteroids.forEach(
+		(item) =>
+		{
+			switch (item.update())
+			{
+				case 1:
+				{
+					let num = asteroids.indexOf(item);
+					delete asteroids[num];
+					asteroids.splice(num, 1);
+				}
+				break
+			}
+		}
+	);
+	
+	if (as_time > 0)
+	{
+		as_time --;
+	}
+	else
+	{
+		let side = choose([-1, 1]);
+		let len = surface.height * 0.5;
+		
+		let angle = side * d90 + Math.random() * d45 * choose([-1, 1]);
+		
+		let sx = surface.width * 0.5 + Math.cos(angle) * len;
+		let sy = surface.height * 0.5 - Math.sin(angle) * len;
+		
+		asteroids.push(
+			new CreateAsteroid(
+				sx,
+				sy,
+				angle + d180
+			)
+		);
+		
+		as_time = as_time_max;
+	}
 }
 
 // Loop (upd + draw)
@@ -296,6 +460,14 @@ function loop()
 			// Player
 			defender[0].draw();
 			defender[1].draw();
+			
+			// asteroids
+			asteroids.forEach(
+				(item) =>
+				{
+					item.draw();
+				}
+			);
 		}
 		break;
 	}
