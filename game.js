@@ -199,6 +199,7 @@ var planet = {
 var as_time_max = 60;
 var as_time = as_time_max;
 var as_speed = 1.5;
+var hits = 0;
 
 function startGame()
 {
@@ -290,6 +291,7 @@ function CreateAsteroid(x, y, dir)
 			) < this.radius + planet.radius
 		)
 		{
+			hits ++;
 			return 1;
 		}
 		
@@ -508,6 +510,11 @@ function loop()
 				as_time_max,
 				8,
 				32
+			);
+			context.fillText(
+				'Попаданий в планету:' + hits,
+				8,
+				48
 			);
 		}
 		break;
