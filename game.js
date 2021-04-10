@@ -185,7 +185,7 @@ var game_state = 'load';
 
 var asteroids = [];
 var defender = [];
-var def_radius = 70;
+var def_radius = 80;
 var main_angle = 0;
 var to_angle = 0;
 var planet = {
@@ -196,9 +196,9 @@ var planet = {
 	'radius': 50,
 	'angle': Math.random() * d360
 };
-var as_time_max = 30;
+var as_time_max = 60;
 var as_time = as_time_max;
-var as_speed = 2.0;
+var as_speed = 1.5;
 
 function startGame()
 {
@@ -351,12 +351,23 @@ function gameUpdate()
 	// input
 	if (mouse_check)
 	{
+		/*
 		to_angle = pointDirection(
 			surface.width * 0.5,
 			surface.height * 0.5,
 			mouse_x,
 			mouse_y
 		);
+		*/
+		
+		if (mouse_x > planet.x)
+		{
+			to_angle -= as_speed * d1 * 1;
+		}
+		else
+		{
+			to_angle += as_speed * d1 * 1;
+		}
 	}
 	
 	/*
@@ -371,6 +382,7 @@ function gameUpdate()
 	{
 		main_angle = to_angle;
 	}
+	
 	*/
 	main_angle += angleDifference(
 		to_angle,
@@ -378,6 +390,22 @@ function gameUpdate()
 	) * 0.1;
 	
 	// asteroids
+	if (as_speed < 2)
+	{
+		as_speed += 0.0005;
+	}
+	else if (as_speed < 4)
+	{
+		as_speed += 0.0001;
+		
+		as_time_max = Math.max(as_time_max - 0.01, 30);
+	}
+	else
+	{
+		as_time_max = Math.min(as_time_max + 0.05, 50);
+		as_speed += 0.00005;
+	}
+	
 	asteroids.forEach(
 		(item) =>
 		{
@@ -403,7 +431,7 @@ function gameUpdate()
 		let side = choose([-1, 1]);
 		let len = surface.height * 0.5;
 		
-		let angle = side * d90 + Math.random() * d45 * choose([-1, 1]);
+		let angle = side * d90 + Math.random() * d45 * 1.15 * choose([-1, 1]);
 		
 		let sx = surface.width * 0.5 + Math.cos(angle) * len;
 		let sy = surface.height * 0.5 - Math.sin(angle) * len;
@@ -467,6 +495,19 @@ function loop()
 				{
 					item.draw();
 				}
+			);
+			
+			// GUI
+			context.font = '20px monospace';
+			context.fillText(
+				as_speed,
+				8,
+				16
+			);
+			context.fillText(
+				as_time_max,
+				8,
+				32
 			);
 		}
 		break;
