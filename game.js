@@ -52,6 +52,19 @@ function pointDirection(xfrom, yfrom, xto, yto)
 	);
 }
 
+// VK
+function vkInit()
+{
+	vkBridge.send('VKWebAppInit');
+}
+
+function showAd()
+{
+	vkBridge.send("VKWebAppShowNativeAds", {ad_format:"preloader"})
+	.then(data => console.log(data.result))
+	.catch(error => console.log(error));
+}
+
 // Res
 var loaded = 0;
 var load_max = 0;
@@ -72,6 +85,11 @@ function loadTextures()
 	tex_path['star1'] = 'img/star1.png';
 	tex_path['star2'] = 'img/star2.png';
 	tex_path['tap_zone'] = 'img/tap_zone.png';
+	tex_path['sb'] = 'img/sb.png';
+	tex_path['particle'] = 'img/particle.png';
+	tex_path['pb0'] = 'img/pb0.png';
+	tex_path['pb1'] = 'img/pb1.png';
+	tex_path['bb'] = 'img/bb.png';
 	
 	Object.keys(tex_path).forEach(
 		(key) =>
@@ -198,6 +216,7 @@ var version = 1;
 var lives = 2;
 var asteroids = [];
 var defender = [];
+var particles = [];
 var def_radius = 80;
 var main_angle = 0;
 var to_angle = 0;
@@ -219,12 +238,13 @@ var timer_max = 60;
 var timer = timer_max;
 var score_qual = 1;
 
-var tutorial_time_max = 60 * 6;
+var tuts = 0;
+var tutorial_time_max = 60 * 4;
 var tutorial_time = tutorial_time_max;
 var tutorial_alpha = 1;
 var tutorial_end = 0;
 var tut2_alpha = 0;
-var tut2_time_max = 60 * 4;
+var tut2_time_max = 60 * 3;
 var tut2_time = tut2_time_max;
 var tut2_switch = 0;
 
@@ -238,7 +258,21 @@ var foreground = document.createElement('Canvas');
 foreground.width = surface.width;
 foreground.height = surface.height;
 var fore_ctx = foreground.getContext('2d');
-var back_draw = 5;
+var back_draw = 10;
+
+var PAUSE = 0;
+var pb_x = surface.width - 40;
+var pb_y = 16;
+var pb_w = 40;
+var pb_h = 40;
+var bcon_x = surface.width * 0.5;
+var bcon_y = surface.height * 0.4;
+var bcon_angle = Math.random() * d360;
+var bmen_x = surface.width * 0.5;
+var bmen_y = surface.height * 0.65;
+var bmen_angle = Math.random() * d360;
+
+var running = 0;
 
 function genBack()
 {
@@ -325,10 +359,30 @@ var T2 = Math.random() * d360;
 
 function preLoad()
 {
-	max_score = sessionStorage.getItem('dioScore' + version);
+	max_score = localStorage.getItem('dioScore' + version);
 	if (max_score == null)
 	{
 		max_score = 0;
+	}
+	
+	running = localStorage.getItem('dioRun' + version);
+	if (running == null)
+	{
+		running = 0;
+	}
+	
+	running ++;
+	
+	if (running >= 2)
+	{
+		showAd();
+	}
+	localStorage.setItem('dioRun' + version, running);
+	
+	tuts = localStorage.getItem('dioTut' + version);
+	if (tuts == null)
+	{
+		tuts = 0;
 	}
 }
 
@@ -336,6 +390,7 @@ function clearObjects()
 {
 	defender = [];
 	asteroids = [];
+	particles = [];
 	
 	lives = 2;
 }
@@ -361,10 +416,42 @@ function startGame()
 	tutorial_time = tutorial_time_max;
 	tutorial_alpha = 1;
 	tutorial_end = 0;
+	tuts ++;
+	if (tuts >= 2)
+	{
+		tutorial_end = 1;
+	}
+	localStorage.setItem('dioTut' + version, tuts);
 	
 	tut2_time = tut2_time_max;
 	tut2_alpha = 0;
 	tut2_switch = 0;
+}
+
+// Menu
+var sb_scale = 1;
+var sb_to = 1;
+var sb_x = surface.width * 0.5;
+var sb_y = surface.height * 0.6;
+var to_game = 0;
+
+function gotoMenu()
+{
+	clearObjects();
+	
+	showAd();
+	
+	if (score > max_score)
+	{
+		max_score = score;
+	}
+	localStorage.setItem('dioScore' + version, max_score);
+	
+	game_state = 'menu';
+	
+	sc_scale = 1;
+	sb_to = 1;
+	to_game = 0;
 }
 
 // lose
@@ -379,10 +466,13 @@ var to_menu = 0;
 
 function loseGame()
 {
+	showAd();
+	
 	if (score > max_score)
 	{
 		max_score = score;
 	}
+	localStorage.setItem('dioScore' + version, max_score);
 	
 	restart_to = 1;
 	restart_scale = 1;
@@ -394,7 +484,6 @@ function loseGame()
 	
 	clearObjects();
 	
-	sessionStorage.setItem('dioScore' + version, max_score);
 	
 	game_state = 'lose';
 }
@@ -418,6 +507,63 @@ function mouseUp()
 				)
 				{
 					to_menu = 1;
+				}
+			}
+		}
+		break;
+		
+		case 'menu':
+		{
+			if (
+				distance(
+					mouse_x,
+					mouse_y,
+					sb_x,
+					sb_y
+				) < 128
+			)
+			{
+				to_game = 1;
+			}
+		}
+		break;
+		
+		case 'game':
+		{
+			if (
+				mouse_x > pb_x &&
+				mouse_y > pb_y &&
+				mouse_x < pb_x + pb_w &&
+				mouse_y < pb_y + pb_h
+			)
+			{
+				PAUSE = !PAUSE;
+			}
+			
+			if (PAUSE)
+			{
+				if (
+					distance(
+						mouse_x,
+						mouse_y,
+						bcon_x,
+						bcon_y
+					) < 140
+				)
+				{
+					PAUSE = 0;
+				}
+				if (
+					distance(
+						mouse_x,
+						mouse_y,
+						bmen_x,
+						bmen_y
+					) < 140
+				)
+				{
+					PAUSE = 0;
+					gotoMenu();
 				}
 			}
 		}
@@ -505,6 +651,18 @@ function CreateAsteroid(x, y, dir)
 			) < this.radius + planet.radius
 		)
 		{
+			let p = 5 + irandom(5);
+			
+			for (let i = 0; i < p; i ++)
+			{
+				particles.push(
+					new CreateParticle(
+						this.x,
+						this.y
+					)
+				);
+			}
+				
 			lives --;
 			return 1;
 		}
@@ -522,6 +680,18 @@ function CreateAsteroid(x, y, dir)
 					)
 				)
 				{
+					let p = 5 + irandom(5);
+					
+					for (let i = 0; i < p; i ++)
+					{
+						particles.push(
+							new CreateParticle(
+								this.x,
+								this.y
+							)
+						);
+					}
+					
 					resul = 1;
 				}
 			}
@@ -557,9 +727,77 @@ function CreateAsteroid(x, y, dir)
 	};
 }
 
+function CreateParticle(x, y)
+{
+	this.x = x;
+	this.y = y;
+	
+	this.speed = 1 + Math.random() * 0.5;
+	
+	this.friction = 0.05;
+	
+	this.half_width = 19;
+	this.half_height = 19;
+	
+	this.scale = 0.1 + Math.random() * 0.2;
+	
+	this.dir = Math.random() * d360;
+	this.vecx = Math.cos(this.dir) * this.speed;
+	this.vecy = -Math.sin(this.dir) * this.speed;
+	
+	
+	this.update = () =>
+	{
+		this.x += this.vecx;
+		this.y += this.vecy;
+		
+		this.vecx = Math.cos(this.dir) * this.speed;
+		this.vecy = -Math.sin(this.dir) * this.speed;
+		
+		if (this.speed > 0)
+		{
+			this.speed -= this.friction;
+		}
+		else
+		{
+			return 1;
+		}
+		
+		return 0;
+	};
+	
+	this.draw = () =>
+	{
+		context.save();
+		
+		context.translate(
+			this.x,
+			this.y
+		);
+		
+		context.scale(
+			this.scale,
+			this.scale
+		);
+		
+		context.drawImage(
+			tex['particle'],
+			-this.half_width,
+			-this.half_height
+		);
+		
+		context.restore();
+	};
+}
+
 // Game Update
 function gameUpdate()
 {
+	if (PAUSE)
+	{
+		return 0;
+	}
+	
 	// defenders
 	defender[0].update();
 	defender[1].update();
@@ -680,6 +918,22 @@ function gameUpdate()
 			}
 		}
 	);
+	
+	particles.forEach(
+		(item) =>
+		{
+			switch (item.update())
+			{
+				case 1:
+				{
+					let num = particles.indexOf(item);
+					delete particles[num];
+					particles.splice(num, 1);
+				}
+				break
+			}
+		}
+	);
 }
 
 // Loop (upd + draw)
@@ -714,12 +968,12 @@ function loop()
 		{
 			if (load_value == load_max)
 			{
-				startGame();
+				gotoMenu();
 			}
 		}
 		break;
 		
-		case 'game':
+		case 'menu':
 		{
 			if (back_draw > 0)
 			{
@@ -734,10 +988,79 @@ function loop()
 				}
 			}
 			
+			sb_to = 1;
+			if (mouse_check)
+			{
+				if (
+					distance(
+						mouse_x,
+						mouse_y,
+						sb_x,
+						sb_y
+					) < 128
+				)
+				{
+					sb_to = 0.8;
+				}
+			}
+			
+			if (sb_scale > 0.95)
+			{
+				if (to_game)
+				{
+					startGame();
+				}
+			}
+			
+			sb_scale += (
+				sb_to - sb_scale
+			) * 0.1;
+			
+			context.save();
+			context.translate(
+				sb_x,
+				sb_y
+			);
+			context.scale(
+				sb_scale,
+				sb_scale
+			);
+			context.drawImage(
+				tex['sb'],
+				-64,
+				-64
+			);
+			context.restore();
+			
+			
+			context.font = 'bold 30px monospace';
+			context.textAlign = 'center';
+			context.textBaseline = 'middle';
+			context.fillStyle = '#FFFFFF';
+			context.fillText(
+				'DEFEND IO',
+				surface.width * 0.5,
+				surface.height * 0.15
+			);
+		}
+		break;
+		
+		case 'game':
+		{
 			gameUpdate();
 			
+			particles.forEach(
+				(item) =>
+				{
+					item.draw();
+				}
+			);
+			
 			// Planet
-			planet.angle += 0.01;
+			if (!PAUSE)
+			{
+				planet.angle += 0.01;
+			}
 			context.save();
 			context.translate(
 				planet.x,
@@ -791,119 +1114,191 @@ function loop()
 			);
 			
 			// Tutorial
-			if (tutorial_time > 0)
+			if (!tutorial_end)
 			{
-				tutorial_time --;
-			}
-			else
-			{
-				tutorial_alpha = Math.max(
-					tutorial_alpha - 0.01,
-					0
-				);
-			}
-			
-			context.globalAlpha = tutorial_alpha;
-			
-			context.font = '15px monospace';
-			context.fillStyle = '#FFFFFF';
-			
-			context.textAlign = 'center';
-			context.textBaseline = 'middle';
-			
-			context.drawImage(
-				tex['tap_zone'],
-				0,
-				0
-			);
-			
-			context.fillText(
-				'Жми сюда,',
-				surface.width * 0.25,
-				surface.height * 0.5
-			);
-			context.fillText(
-				'чтобы сдвинуть влево',
-				surface.width * 0.25,
-				surface.height * 0.5 + 32
-			);
-			
-			context.drawImage(
-				tex['tap_zone'],
-				surface.width * 0.5,
-				0
-			);
-			
-			context.fillText(
-				'Жми сюда,',
-				surface.width * 0.75,
-				surface.height * 0.5
-			);
-			context.fillText(
-				'чтобы сдвинуть вправо',
-				surface.width * 0.75,
-				surface.height * 0.5 + 32
-			);
-			
-			context.globalAlpha = 1;
-			
-			if (tutorial_alpha == 0)
-			{
-				if (!tut2_switch)
+				if (tutorial_time > 0)
 				{
-					if (tut2_alpha < 1)
-					{
-						tut2_alpha += 0.02;
-					}
-					else
-					{
-						tut2_switch = 1
-					}
+					tutorial_time --;
 				}
 				else
 				{
-					if (tut2_time > 0)
+					tutorial_alpha = Math.max(
+						tutorial_alpha - 0.01,
+						0
+					);
+				}
+				
+				context.globalAlpha = tutorial_alpha;
+				
+				context.font = '15px monospace';
+				context.fillStyle = '#FFFFFF';
+				
+				context.textAlign = 'center';
+				context.textBaseline = 'middle';
+				
+				context.drawImage(
+					tex['tap_zone'],
+					0,
+					0
+				);
+				
+				context.fillText(
+					'Жми сюда,',
+					surface.width * 0.25,
+					surface.height * 0.5
+				);
+				context.fillText(
+					'чтобы сдвинуть влево',
+					surface.width * 0.25,
+					surface.height * 0.5 + 32
+				);
+				
+				context.drawImage(
+					tex['tap_zone'],
+					surface.width * 0.5,
+					0
+				);
+				
+				context.fillText(
+					'Жми сюда,',
+					surface.width * 0.75,
+					surface.height * 0.5
+				);
+				context.fillText(
+					'чтобы сдвинуть вправо',
+					surface.width * 0.75,
+					surface.height * 0.5 + 32
+				);
+				
+				context.globalAlpha = 1;
+				
+				if (tutorial_alpha == 0)
+				{
+					if (!tut2_switch)
 					{
-						tut2_time --;
-					}
-					else
-					{
-						if (tut2_alpha > 0)
+						if (tut2_alpha < 1)
 						{
-							tut2_alpha -= 0.02;
+							tut2_alpha += 0.02;
 						}
 						else
 						{
-							tut2_alpha = 0;
-							tutorial_end = 1;
+							tut2_switch = 1
+						}
+					}
+					else
+					{
+						if (tut2_time > 0)
+						{
+							tut2_time --;
+						}
+						else
+						{
+							if (tut2_alpha > 0)
+							{
+								tut2_alpha -= 0.02;
+							}
+							else
+							{
+								tut2_alpha = 0;
+								tutorial_end = 1;
+							}
 						}
 					}
 				}
+				
+				context.globalAlpha = Math.max(tut2_alpha, 0);
+				context.fillText(
+					'Сбивай астероиды щитами!',
+					surface.width * 0.5,
+					surface.height * 0.3
+				);
+				context.fillText(
+					'НЕ ДОПУСТИ СТОЛКНОВЕНИЯ АСТЕРОИДА',
+					surface.width * 0.5,
+					surface.height * 0.3 + 32
+				);
+				context.fillText(
+					'С ПЛАНЕТОЙ',
+					surface.width * 0.5,
+					surface.height * 0.3 + 64
+				);
+				
+				context.globalAlpha = 1;
 			}
-			
-			context.globalAlpha = tut2_alpha;
-			context.fillText(
-				'Сбивай астероиды щитами!',
-				surface.width * 0.5,
-				surface.height * 0.3
-			);
-			context.fillText(
-				'НЕ ДОПУСТИ СТОЛКНОВЕНИЯ АСТЕРОИДА',
-				surface.width * 0.5,
-				surface.height * 0.3 + 32
-			);
-			context.fillText(
-				'С ПЛАНЕТОЙ',
-				surface.width * 0.5,
-				surface.height * 0.3 + 64
-			);
-			
-			context.globalAlpha = 1;
 			
 			if (lives <= 0)
 			{
 				loseGame();
 			}
+			
+			// Pause
+			let _t = 'pb0';
+			if (PAUSE)
+			{
+				_t = 'pb1';
+				context.globalAlpha = 0.6;
+				context.fillStyle = '#000000';
+				context.fillRect(
+					0,
+					0,
+					surface.width,
+					surface.height
+				);
+				context.globalAlpha = 1;
+				
+				bmen_angle += 0.01;
+				bcon_angle += 0.01;
+				
+				context.fillStyle = '#FFFFFF';
+				context.font = 'bold 15px monospace';
+				context.textAlign = 'center';
+				context.textBaseline = 'middle';
+				
+				context.save();
+				context.translate(
+					bcon_x,
+					bcon_y
+				);
+				context.fillText(
+					'Продолжить',
+					0,
+					0
+				);
+				context.rotate(
+					bcon_angle
+				);
+				context.drawImage(
+					tex['bb'],
+					-70,
+					-70
+				);
+				context.restore();
+				
+				context.save();
+				context.translate(
+					bmen_x,
+					bmen_y
+				);
+				context.fillText(
+					'В меню',
+					0,
+					0
+				);
+				context.rotate(
+					bmen_angle
+				);
+				context.drawImage(
+					tex['bb'],
+					-70,
+					-70
+				);
+				context.restore();
+			}
+			context.drawImage(
+				tex[_t],
+				pb_x,
+				pb_y
+			);
 		}
 		break;
 		
@@ -982,7 +1377,7 @@ function loop()
 						) < 128
 					)
 					{
-						restart_to = 0.75;
+						restart_to = 0.8;
 						color = 1;
 					}
 				}
@@ -991,7 +1386,7 @@ function loop()
 					restart_to - restart_scale
 				) * 0.1;
 				
-				if (restart_scale > 0.9)
+				if (restart_scale > 0.95)
 				{
 					if (to_menu)
 					{
