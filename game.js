@@ -68,6 +68,10 @@ function loadTextures()
 	tex_path['asteroid'] = 'img/asteroid.png';
 	tex_path['restart0'] = 'img/restart0.png';
 	tex_path['restart1'] = 'img/restart1.png';
+	tex_path['star0'] = 'img/star0.png';
+	tex_path['star1'] = 'img/star1.png';
+	tex_path['star2'] = 'img/star2.png';
+	tex_path['tap_zone'] = 'img/tap_zone.png';
 	
 	Object.keys(tex_path).forEach(
 		(key) =>
@@ -215,6 +219,107 @@ var timer_max = 60;
 var timer = timer_max;
 var score_qual = 1;
 
+var tutorial_time_max = 60 * 6;
+var tutorial_time = tutorial_time_max;
+var tutorial_alpha = 1;
+var tutorial_end = 0;
+var tut2_alpha = 0;
+var tut2_time_max = 60 * 4;
+var tut2_time = tut2_time_max;
+var tut2_switch = 0;
+
+var background = document.createElement('Canvas');
+background.width = surface.width;
+background.height = surface.height;
+var back_ctx = background.getContext('2d');
+var back_loaded = 0;
+
+var foreground = document.createElement('Canvas');
+foreground.width = surface.width;
+foreground.height = surface.height;
+var fore_ctx = foreground.getContext('2d');
+var fore_loaded = 0;
+
+function genBack()
+{
+	/*
+	back_ctx.drawImage(
+		tex['back1'],
+		0,
+		0
+	);
+	*/
+	
+	let stars = 50 + irandom(40);
+	
+	for (let i = 0; i < stars; i ++)
+	{
+		back_ctx.save();
+		back_ctx.translate(
+			irandom(
+				surface.width - 15
+			),
+			irandom(
+				surface.height - 15
+			)
+		);
+		let scale = 0.05 + Math.random() * 0.2;
+		back_ctx.scale(
+			scale,
+			scale
+		);
+		back_ctx.drawImage(
+			tex[
+				choose(
+					[
+						'star0',
+						'star1',
+						'star2'
+					]
+				)
+			],
+			0,
+			0
+		);
+		back_ctx.restore();
+	}
+	
+	for (let i = 0; i < stars * 0.4; i ++)
+	{
+		// Foreground
+		fore_ctx.save();
+		fore_ctx.translate(
+			irandom(
+				surface.width - 15
+			),
+			irandom(
+				surface.height - 15
+			)
+		);
+		scale = 0.2 + Math.random() * 0.3;
+		fore_ctx.scale(
+			scale,
+			scale
+		);
+		fore_ctx.drawImage(
+			tex[
+				choose(
+					[
+						'star0',
+						'star1',
+						'star2'
+					]
+				)
+			],
+			0,
+			0
+		);
+		fore_ctx.restore();
+	}
+	
+	back_loaded = 1;
+}
+
 var T1 = Math.random() * d360;
 var T2 = Math.random() * d360;
 
@@ -252,6 +357,14 @@ function startGame()
 	
 	as_speed = 1.5;
 	as_time_max = 60;
+	
+	tutorial_time = tutorial_time_max;
+	tutorial_alpha = 1;
+	tutorial_end = 0;
+	
+	tut2_time = tut2_time_max;
+	tut2_alpha = 0;
+	tut2_switch = 0;
 }
 
 // lose
@@ -504,24 +617,52 @@ function gameUpdate()
 	) * 0.1;
 	
 	// asteroids
-	if (as_speed < 2)
+	if (tutorial_end)
 	{
-		as_speed += 0.0005;
-	}
-	else if (as_speed < 4)
-	{
-		score_qual = 5;
+		if (as_speed < 2)
+		{
+			as_speed += 0.0005;
+		}
+		else if (as_speed < 4)
+		{
+			score_qual = 5;
+			
+			as_speed += 0.0001;
+			
+			as_time_max = Math.max(as_time_max - 0.01, 30);
+		}
+		else
+		{
+			score_qual = 10;
+			
+			as_time_max = Math.min(as_time_max + 0.05, 37);
+			as_speed += 0.00005;
+		}
 		
-		as_speed += 0.0001;
-		
-		as_time_max = Math.max(as_time_max - 0.01, 30);
-	}
-	else
-	{
-		score_qual = 10;
-		
-		as_time_max = Math.min(as_time_max + 0.05, 37);
-		as_speed += 0.00005;
+		if (as_time > 0)
+		{
+			as_time --;
+		}
+		else
+		{
+			let side = choose([-1, 1]);
+			let len = surface.height * 0.7;
+			
+			let angle = side * d90 + Math.random() * d45 * 1.15 * choose([-1, 1]);
+			
+			let sx = surface.width * 0.5 + Math.cos(angle) * len;
+			let sy = surface.height * 0.5 - Math.sin(angle) * len;
+			
+			asteroids.push(
+				new CreateAsteroid(
+					sx,
+					sy,
+					angle + d180
+				)
+			);
+			
+			as_time = as_time_max;
+		}
 	}
 	
 	asteroids.forEach(
@@ -539,31 +680,6 @@ function gameUpdate()
 			}
 		}
 	);
-	
-	if (as_time > 0)
-	{
-		as_time --;
-	}
-	else
-	{
-		let side = choose([-1, 1]);
-		let len = surface.height * 0.7;
-		
-		let angle = side * d90 + Math.random() * d45 * 1.15 * choose([-1, 1]);
-		
-		let sx = surface.width * 0.5 + Math.cos(angle) * len;
-		let sy = surface.height * 0.5 - Math.sin(angle) * len;
-		
-		asteroids.push(
-			new CreateAsteroid(
-				sx,
-				sy,
-				angle + d180
-			)
-		);
-		
-		as_time = as_time_max;
-	}
 }
 
 // Loop (upd + draw)
@@ -573,22 +689,44 @@ function loop()
 	T2 += 0.1;
 	
 	// Clear
-	context.drawImage(
-		tex['back1'],
-		0,
-		0
-	);
+	if (game_state != 'load')
+	{
+		context.drawImage(
+			tex['back1'],
+			0,
+			0
+		);
+		context.drawImage(
+			background,
+			Math.cos(T2 * 0.05) * 5,
+			-Math.sin(T2 * 0.05) * 5
+		);
+		context.drawImage(
+			foreground,
+			-Math.cos(T2 * 0.05) * 8,
+			Math.sin(T2 * 0.05) * 8
+		);
+	}
 	
 	switch (game_state)
 	{
 		case 'load':
 		{
-			startGame();
+			if (load_value == load_max)
+			{
+				startGame();
+			}
 		}
 		break;
 		
 		case 'game':
 		{
+			if (!back_loaded)
+			{
+				genBack();
+				back_loaded = 1;
+			}
+			
 			gameUpdate();
 			
 			// Planet
@@ -644,6 +782,116 @@ function loop()
 				8,
 				32
 			);
+			
+			// Tutorial
+			if (tutorial_time > 0)
+			{
+				tutorial_time --;
+			}
+			else
+			{
+				tutorial_alpha = Math.max(
+					tutorial_alpha - 0.01,
+					0
+				);
+			}
+			
+			context.globalAlpha = tutorial_alpha;
+			
+			context.font = '15px monospace';
+			context.fillStyle = '#FFFFFF';
+			
+			context.textAlign = 'center';
+			context.textBaseline = 'middle';
+			
+			context.drawImage(
+				tex['tap_zone'],
+				0,
+				0
+			);
+			
+			context.fillText(
+				'Жми сюда,',
+				surface.width * 0.25,
+				surface.height * 0.5
+			);
+			context.fillText(
+				'чтобы сдвинуть влево',
+				surface.width * 0.25,
+				surface.height * 0.5 + 32
+			);
+			
+			context.drawImage(
+				tex['tap_zone'],
+				surface.width * 0.5,
+				0
+			);
+			
+			context.fillText(
+				'Жми сюда,',
+				surface.width * 0.75,
+				surface.height * 0.5
+			);
+			context.fillText(
+				'чтобы сдвинуть вправо',
+				surface.width * 0.75,
+				surface.height * 0.5 + 32
+			);
+			
+			context.globalAlpha = 1;
+			
+			if (tutorial_alpha == 0)
+			{
+				if (!tut2_switch)
+				{
+					if (tut2_alpha < 1)
+					{
+						tut2_alpha += 0.02;
+					}
+					else
+					{
+						tut2_switch = 1
+					}
+				}
+				else
+				{
+					if (tut2_time > 0)
+					{
+						tut2_time --;
+					}
+					else
+					{
+						if (tut2_alpha > 0)
+						{
+							tut2_alpha -= 0.02;
+						}
+						else
+						{
+							tut2_alpha = 0;
+							tutorial_end = 1;
+						}
+					}
+				}
+			}
+			
+			context.globalAlpha = tut2_alpha;
+			context.fillText(
+				'Сбивай астероиды щитами!',
+				surface.width * 0.5,
+				surface.height * 0.3
+			);
+			context.fillText(
+				'НЕ ДОПУСТИ СТОЛКНОВЕНИЯ АСТЕРОИДА',
+				surface.width * 0.5,
+				surface.height * 0.3 + 32
+			);
+			context.fillText(
+				'С ПЛАНЕТОЙ',
+				surface.width * 0.5,
+				surface.height * 0.3 + 64
+			);
+			
+			context.globalAlpha = 1;
 			
 			if (lives <= 0)
 			{
@@ -773,7 +1021,5 @@ function loop()
 loadTextures();
 setScreen();
 preLoad();
-
-loseGame();
 
 requestAnimationFrame(loop);
