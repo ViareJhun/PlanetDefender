@@ -65,6 +65,22 @@ function showAd()
 	.catch(error => console.log(error));
 }
 
+function groupVK()
+{
+	vkBridge.send("VKWebAppJoinGroup", {"group_id": 203816953});
+	/*
+	.then(data => console.log(data.result))
+	.catch(error => console.log(error));
+	*/
+}
+
+function shareVK()
+{
+	vkBridge.send("VKWebAppShowInviteBox", {})
+    .then(data => console.log(data.success))
+    .catch(error => console.log(error));
+}
+
 // Res
 var loaded = 0;
 var load_max = 0;
@@ -211,7 +227,7 @@ addEventListener(
 // Game
 var game_state = 'load';
 
-var version = 1;
+var version = 2;
 
 var lives = 2;
 var asteroids = [];
@@ -239,12 +255,12 @@ var timer = timer_max;
 var score_qual = 1;
 
 var tuts = 0;
-var tutorial_time_max = 60 * 4;
+var tutorial_time_max = 60 * 3;
 var tutorial_time = tutorial_time_max;
 var tutorial_alpha = 1;
 var tutorial_end = 0;
 var tut2_alpha = 0;
-var tut2_time_max = 60 * 3;
+var tut2_time_max = 60 * 2.5;
 var tut2_time = tut2_time_max;
 var tut2_switch = 0;
 
@@ -455,7 +471,7 @@ function gotoMenu()
 }
 
 // lose
-var restart_time = 60 * 3;
+var restart_time = 60 * 1.5;
 var restart_alpha = 0;
 var restart_scale = 1;
 var restart_to = 1;
