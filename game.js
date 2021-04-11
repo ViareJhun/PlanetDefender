@@ -455,8 +455,6 @@ function gotoMenu()
 {
 	clearObjects();
 	
-	showAd();
-	
 	if (score > max_score)
 	{
 		max_score = score;
@@ -479,11 +477,10 @@ var restart_x = surface.width * 0.5;
 var restart_y = surface.height * 0.6;
 var score_draw = 0;
 var to_menu = 0;
+var lose_ad = 0;
 
 function loseGame()
 {
-	showAd();
-	
 	if (score > max_score)
 	{
 		max_score = score;
@@ -500,6 +497,7 @@ function loseGame()
 	
 	clearObjects();
 	
+	lose_ad = 0;
 	
 	game_state = 'lose';
 }
@@ -580,6 +578,10 @@ function mouseUp()
 				{
 					PAUSE = 0;
 					gotoMenu();
+					if (choose([false, true]))
+					{
+						showAd();
+					}
 				}
 			}
 		}
@@ -1352,6 +1354,12 @@ function loop()
 			else
 			{
 				score_draw = score;
+				
+				if (!lose_ad)
+				{
+					lose_ad = 1;
+					showAd();
+				}
 			}
 			
 			context.font = '15px monospace';
