@@ -721,10 +721,10 @@ function loop()
 		
 		case 'game':
 		{
-			if (!back_loaded)
+			if (back_loaded < 15)
 			{
 				genBack();
-				back_loaded = 1;
+				back_loaded = 15;
 			}
 			
 			gameUpdate();
