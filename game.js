@@ -724,7 +724,7 @@ function loop()
 			if (back_loaded < 15)
 			{
 				genBack();
-				back_loaded = 15;
+				back_loaded ++;
 			}
 			
 			gameUpdate();
