@@ -238,7 +238,7 @@ var foreground = document.createElement('Canvas');
 foreground.width = surface.width;
 foreground.height = surface.height;
 var fore_ctx = foreground.getContext('2d');
-var fore_loaded = 0;
+var back_draw = 5;
 
 function genBack()
 {
@@ -721,10 +721,17 @@ function loop()
 		
 		case 'game':
 		{
-			if (back_loaded < 15)
+			if (back_draw > 0)
 			{
-				genBack();
-				back_loaded ++;
+				back_draw --;
+			}
+			else
+			{
+				if (!back_loaded)
+				{
+					back_loaded = 1;
+					genBack();
+				}
 			}
 			
 			gameUpdate();
