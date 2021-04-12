@@ -289,6 +289,7 @@ var bmen_y = surface.height * 0.8;
 var bmen_angle = Math.random() * d360;
 
 var pause_time = 0;
+var tomenu_time = 0;
 
 var running = 0;
 
@@ -468,6 +469,8 @@ function gotoMenu()
 	sc_scale = 1;
 	sb_to = 1;
 	to_game = 0;
+	
+	tomenu_time = 10;
 }
 
 // lose
@@ -539,7 +542,10 @@ function mouseUp()
 				) < 128
 			)
 			{
-				to_game = 1;
+				if (tomenu_time == 0)
+				{
+					to_game = 1;
+				}
 			}
 		}
 		break;
@@ -582,11 +588,15 @@ function mouseUp()
 					) < 140
 				)
 				{
-					PAUSE = 0;
-					gotoMenu();
-					if (choose([false, true]))
+					if (tomenu_time == 0)
 					{
-						showAd();
+						PAUSE = 0;
+						if (choose([true, true]))
+						{
+							showAd();
+						}
+						gotoMenu();
+						tomenu_time = 15;
 					}
 				}
 			}
@@ -967,6 +977,7 @@ function loop()
 	T2 += 0.1;
 	
 	pause_time = Math.max(pause_time - 1, 0);
+	tomenu_time = Math.max(tomenu_time - 1, 0);
 	
 	// Clear
 	if (game_state != 'load')
