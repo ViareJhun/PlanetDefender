@@ -227,7 +227,7 @@ addEventListener(
 // Game
 var game_state = 'load';
 
-var version = 2;
+var version = 3;
 
 var lives = 2;
 var asteroids = [];
@@ -290,6 +290,7 @@ var bmen_angle = Math.random() * d360;
 
 var pause_time = 0;
 var tomenu_time = 0;
+var tomenu_switch = 0;
 
 var running = 0;
 
@@ -533,18 +534,21 @@ function mouseUp()
 		
 		case 'menu':
 		{
-			if (
-				distance(
-					mouse_x,
-					mouse_y,
-					sb_x,
-					sb_y
-				) < 128
-			)
+			if (!tomenu_switch)
 			{
-				if (tomenu_time == 0)
+				if (
+					distance(
+						mouse_x,
+						mouse_y,
+						sb_x,
+						sb_y
+					) < 128
+				)
 				{
-					to_game = 1;
+					if (tomenu_time == 0)
+					{
+						to_game = 1;
+					}
 				}
 			}
 		}
@@ -596,7 +600,7 @@ function mouseUp()
 							showAd();
 						}
 						gotoMenu();
-						tomenu_time = 15;
+						tomenu_switch = 1;
 					}
 				}
 			}
@@ -1012,6 +1016,12 @@ function loop()
 		
 		case 'menu':
 		{
+			if (tomenu_switch)
+			{
+				tomenu_switch = 0;
+				tomenu_time = 15;
+			}
+			
 			if (back_draw > 0)
 			{
 				back_draw --;
