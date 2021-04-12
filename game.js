@@ -282,11 +282,13 @@ var pb_y = 16;
 var pb_w = 40;
 var pb_h = 40;
 var bcon_x = surface.width * 0.5;
-var bcon_y = surface.height * 0.4;
+var bcon_y = surface.height * 0.2;
 var bcon_angle = Math.random() * d360;
 var bmen_x = surface.width * 0.5;
-var bmen_y = surface.height * 0.65;
+var bmen_y = surface.height * 0.8;
 var bmen_angle = Math.random() * d360;
+
+var pause_time = 0;
 
 var running = 0;
 
@@ -544,14 +546,18 @@ function mouseUp()
 		
 		case 'game':
 		{
-			if (
-				mouse_x > pb_x &&
-				mouse_y > pb_y &&
-				mouse_x < pb_x + pb_w &&
-				mouse_y < pb_y + pb_h
-			)
+			if (pause_time == 0)
 			{
-				PAUSE = !PAUSE;
+				if (
+					mouse_x > pb_x &&
+					mouse_y > pb_y &&
+					mouse_x < pb_x + pb_w &&
+					mouse_y < pb_y + pb_h
+				)
+				{
+					PAUSE = !PAUSE;
+					pause_time = 20;
+				}
 			}
 			
 			if (PAUSE)
@@ -959,6 +965,8 @@ function loop()
 {
 	T1 += 0.02;
 	T2 += 0.1;
+	
+	pause_time = Math.max(pause_time - 1, 0);
 	
 	// Clear
 	if (game_state != 'load')
