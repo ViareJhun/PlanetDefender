@@ -344,6 +344,14 @@ var tut2_time_max = 60 * 2.5;
 var tut2_time = tut2_time_max;
 var tut2_switch = 0;
 
+var gBack = document.createElement('Canvas');
+gBack.width = surface.width;
+gBack.height = surface.height;
+var gCtx = gBack.getContext('2d');
+var gradient = gCtx.createLinearGradient(0, 0, 0, gBack.height);
+gradient.addColorStop(0, '#000000');
+gradient.addColorStop(1, '#002288');
+
 var background = document.createElement('Canvas');
 background.width = surface.width;
 background.height = surface.height;
@@ -383,6 +391,13 @@ function genBack()
 		0
 	);
 	*/
+	gCtx.fillStyle = gradient;
+	gCtx.fillRect(
+		0,
+		0,
+		gBack.width,
+		gBack.height
+	);
 	
 	let stars = 50 + irandom(40);
 	
@@ -1103,17 +1118,19 @@ function loop()
 	// Clear
 	if (game_state != 'load')
 	{
+		/*
 		context.save();
 		context.scale(
 			1,
 			hscale
 		);
+		*/
 		context.drawImage(
-			tex['back1'],
+			gBack,
 			0,
 			0
 		);
-		context.restore();
+		// context.restore();
 		context.drawImage(
 			background,
 			Math.cos(T2 * 0.05) * 5,
