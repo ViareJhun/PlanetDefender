@@ -302,7 +302,7 @@ addEventListener(
 // Game
 var game_state = 'load';
 
-var version = 3;
+var version = 4;
 
 var lives = 2;
 var asteroids = [];
