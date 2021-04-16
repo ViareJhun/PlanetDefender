@@ -88,6 +88,38 @@ function pointDirection(xfrom, yfrom, xto, yto)
 	);
 }
 
+function pointBox(px, py, bx, by, bw, bh)
+{
+	return (
+		px >= bx &&
+		py >= by &&
+		px < bx + bw &&
+		py < by + bh
+	);
+}
+
+function getWidthOfText(txt, fontname, fontsize)
+{
+    if (getWidthOfText.c === undefined)
+	{
+        getWidthOfText.c = document.createElement('canvas');
+        getWidthOfText.ctx = getWidthOfText.c.getContext('2d');
+    }
+    getWidthOfText.ctx.font = fontsize + 'px ' + fontname;
+    return getWidthOfText.ctx.measureText(txt).width;
+}
+
+function getHeightOfText(txt, fontname, fontsize)
+{
+    if (getHeightOfText.c === undefined)
+	{
+        getHeightOfText.c = document.createElement('canvas');
+        getHeightOfText.ctx = getHeightOfText.c.getContext('2d');
+    }
+    getHeightOfText.ctx.font = fontsize + 'px ' + fontname;
+    return getHeightOfText.ctx.measureText(txt).height;
+}
+
 // Audio
 var audioLoaded = 0;
 
@@ -188,6 +220,18 @@ function shareVK()
 	vkBridge.send("VKWebAppShowInviteBox", {})
     .then(data => console.log(data.success))
     .catch(error => console.log(error));
+}
+
+// https://vk.com/app7820077
+function wallVK(wall_text)
+{
+	vkBridge.send(
+		"VKWebAppShowWallPostBox",
+		{
+		  "message": wall_text,
+		  "attachments": "https://vk.com/app7820077"
+		}
+	);
 }
 
 // Res
@@ -379,6 +423,8 @@ var bmen_angle = Math.random() * d360;
 var pause_time = 0;
 var tomenu_time = 0;
 var tomenu_switch = 0;
+
+var wall_time = 0;
 
 var running = 0;
 
@@ -584,6 +630,12 @@ var restart_y = surface.height * 0.6;
 var score_draw = 0;
 var to_menu = 0;
 var lose_ad = 0;
+var wallText = 'Поделиться результатом!';
+var wall_font = '20px monospace';
+var wall_w = getWidthOfText(wallText, 'monospace', 20);
+var wall_h = 32;
+var wall_x = surface.width * 0.5 - wall_w / 2;
+var wall_y = surface.height * 0.85 - wall_h / 2;
 
 function loseGame()
 {
@@ -623,10 +675,31 @@ function mouseUp()
 						mouse_y,
 						restart_x,
 						restart_y
-					) < 128
+					) < 80
 				)
 				{
 					to_menu = 1;
+				}
+			} 
+			
+			if (wall_time == 0)
+			{
+				if (
+					pointBox(
+						mouse_x,
+						mouse_y,
+						wall_x,
+						wall_y,
+						wall_w,
+						wall_h
+					)
+				)
+				{
+					wall_time = 15;
+					
+					wallVK(
+						'Я набрал ' + score + ' очков в Defend IO! Сможете побить рекорд ?)'
+					);
 				}
 			}
 		}
@@ -1616,6 +1689,16 @@ function loop()
 				
 				context.globalAlpha = 1.0;
 			}
+			
+			context.font = wall_font;
+			context.textAlign = 'left';
+			context.textBaseline = 'top';
+			context.fillStyle = '#FFFFFF';
+			context.fillText(
+				wallText,
+				wall_x,
+				wall_y
+			);
 		}
 		break;
 	}
