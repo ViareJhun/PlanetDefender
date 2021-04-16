@@ -215,10 +215,12 @@ function setScreen()
 	{
 		asp = innerWidth / surface.width;
 		var vw = surface.width * asp;
-		var vh = surface.height * asp;
+		// var vh = surface.height * asp;
+		var vh = innerHeight;
+		surface.height = vh / asp;
 		
 		xoffset = 0;
-		yoffset = (innerHeight - vh) * 0.5;
+		// yoffset = (innerHeight - vh) * 0.5;
 	}
 	
 	surface.style.width = vw + 'px';
