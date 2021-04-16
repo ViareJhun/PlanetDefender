@@ -1,3 +1,5 @@
+setScreen();
+
 // Graphics
 var surface = document.getElementById('surface');
 var context = surface.getContext('2d');
@@ -1599,7 +1601,6 @@ function loop()
 
 // Start Game
 loadTextures();
-setScreen();
 audioLoad();
 preLoad();
 
