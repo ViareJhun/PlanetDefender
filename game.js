@@ -52,6 +52,79 @@ function pointDirection(xfrom, yfrom, xto, yto)
 	);
 }
 
+// Audio
+var audioLoaded = 0;
+
+var snd_path = [];
+var snd = [];
+var snd_index = [];
+
+var music = new Audio();
+
+function audioLoad()
+{
+	snd_path['asteroid'] = 'snd/asteroid.ogg';
+	
+	Object.keys(snd_path).forEach(
+		(key) =>
+		{
+			snd[key] = [null, null, null];
+			for (var i = 0; i < 6; i ++)
+			{
+				snd[key][i] = new Audio();
+				snd[key][i].src = snd_path[key];
+			}
+			snd_index[key] = 0;
+		}
+	);
+	
+	Object.keys(snd).forEach(
+		(item) =>
+		{
+			snd[item].forEach(
+				(aud) =>
+				{
+					switch (item)
+					{
+						case 'asteroid':
+						{
+							aud.volume = 0.5;
+						}
+						break;
+					}
+				}
+			);
+		}
+	);
+	
+	music.src = 'mus.ogg';
+	music.volume = 0.2;
+	music.play();
+	
+	music.onended = () =>
+	{
+		music.play();
+	};
+}
+
+window.addEventListener(
+	'unload',
+	() =>
+	{
+		music.stop();
+	}
+)
+
+function sound_play(sound)
+{
+	snd[sound][snd_index[sound]].play();
+	snd_index[sound] ++;
+	if (snd_index[sound] > 5)
+	{
+		snd_index[sound] = 0;
+	}
+}
+
 // VK
 function vkInit()
 {
@@ -106,6 +179,8 @@ function loadTextures()
 	tex_path['pb0'] = 'img/pb0.png';
 	tex_path['pb1'] = 'img/pb1.png';
 	tex_path['bb'] = 'img/bb.png';
+	tex_path['group'] = 'img/group.png';
+	tex_path['sharing'] = 'img/sharing.png';
 	
 	Object.keys(tex_path).forEach(
 		(key) =>
@@ -455,6 +530,11 @@ var sb_x = surface.width * 0.5;
 var sb_y = surface.height * 0.6;
 var to_game = 0;
 
+var bg_x = surface.width * 0.2;
+var bg_y = surface.height * 0.85;
+var bs_x = surface.width * 0.8;
+var bs_y = surface.height * 0.85;
+
 function gotoMenu()
 {
 	clearObjects();
@@ -542,12 +622,43 @@ function mouseUp()
 						mouse_y,
 						sb_x,
 						sb_y
-					) < 128
+					) < 80
 				)
 				{
 					if (tomenu_time == 0)
 					{
 						to_game = 1;
+					}
+				}
+				
+				if (
+					distance(
+						mouse_x,
+						mouse_y,
+						bg_x,
+						bg_y
+					) < 64
+				)
+				{
+					if (tomenu_time == 0)
+					{
+						groupVK();
+						tomenu_time = 10;
+					}
+				}
+				if (
+					distance(
+						mouse_x,
+						mouse_y,
+						bs_x,
+						bs_y
+					) < 64
+				)
+				{
+					if (tomenu_time == 0)
+					{
+						shareVK();
+						tomenu_time = 10;
 					}
 				}
 			}
@@ -948,6 +1059,7 @@ function gameUpdate()
 			{
 				case 1:
 				{
+					sound_play('asteroid');
 					let num = asteroids.indexOf(item);
 					delete asteroids[num];
 					asteroids.splice(num, 1);
@@ -1088,6 +1200,17 @@ function loop()
 				'DEFEND IO',
 				surface.width * 0.5,
 				surface.height * 0.15
+			);
+			
+			context.drawImage(
+				tex['group'],
+				bg_x - 64,
+				bg_y - 64
+			);
+			context.drawImage(
+				tex['sharing'],
+				bs_x - 64,
+				bs_y - 64
 			);
 		}
 		break;
@@ -1475,6 +1598,7 @@ function loop()
 // Start Game
 loadTextures();
 setScreen();
+audioLoad();
 preLoad();
 
 requestAnimationFrame(loop);
