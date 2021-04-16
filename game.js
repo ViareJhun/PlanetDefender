@@ -1,8 +1,8 @@
-setScreen();
-
 // Graphics
 var surface = document.getElementById('surface');
 var context = surface.getContext('2d');
+
+setScreen();
 
 context.imageSmoothingEnabled = true;
 
