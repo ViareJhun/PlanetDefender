@@ -1102,11 +1102,17 @@ function loop()
 	// Clear
 	if (game_state != 'load')
 	{
+		context.save();
+		context.scale(
+			1,
+			asp
+		);
 		context.drawImage(
 			tex['back1'],
 			0,
 			0
 		);
+		context.restore();
 		context.drawImage(
 			background,
 			Math.cos(T2 * 0.05) * 5,
