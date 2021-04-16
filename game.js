@@ -2,6 +2,40 @@
 var surface = document.getElementById('surface');
 var context = surface.getContext('2d');
 
+
+// Set Screen
+var asp = 1;
+var xoffset = 0;
+var yoffset = 0;
+var hscale = 1;
+
+function setScreen()
+{
+	asp = innerHeight / surface.height;
+	var vw = surface.width * asp;
+	var vh = surface.height * asp;
+	xoffset = (innerWidth - vw) * 0.5;
+	
+	if (vw > innerWidth)
+	{
+		asp = innerWidth / surface.width;
+		var vw = surface.width * asp;
+		// var vh = surface.height * asp;
+		var vh = innerHeight;
+		surface.height = vh / asp;
+		hscale = vh / surface.height;
+		
+		xoffset = 0;
+		// yoffset = (innerHeight - vh) * 0.5;
+	}
+	
+	surface.style.width = vw + 'px';
+	surface.style.height = vh + 'py';
+	
+	surface.style.top = yoffset;
+	surface.style.left = xoffset;
+	surface.style.position = 'fixed';
+}
 setScreen();
 
 context.imageSmoothingEnabled = true;
@@ -198,39 +232,6 @@ function loadTextures()
 	);
 	
 	load_max += tex.length;
-}
-
-
-// Set Screen
-var asp = 1;
-var xoffset = 0;
-var yoffset = 0;
-
-function setScreen()
-{
-	asp = innerHeight / surface.height;
-	var vw = surface.width * asp;
-	var vh = surface.height * asp;
-	xoffset = (innerWidth - vw) * 0.5;
-	
-	if (vw > innerWidth)
-	{
-		asp = innerWidth / surface.width;
-		var vw = surface.width * asp;
-		// var vh = surface.height * asp;
-		var vh = innerHeight;
-		surface.height = vh / asp;
-		
-		xoffset = 0;
-		// yoffset = (innerHeight - vh) * 0.5;
-	}
-	
-	surface.style.width = vw + 'px';
-	surface.style.height = vh + 'py';
-	
-	surface.style.top = yoffset;
-	surface.style.left = xoffset;
-	surface.style.position = 'fixed';
 }
 
 
@@ -1105,7 +1106,7 @@ function loop()
 		context.save();
 		context.scale(
 			1,
-			asp
+			hscale
 		);
 		context.drawImage(
 			tex['back1'],
