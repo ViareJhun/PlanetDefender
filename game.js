@@ -1187,6 +1187,7 @@ function loop()
 	
 	pause_time = Math.max(pause_time - 1, 0);
 	tomenu_time = Math.max(tomenu_time - 1, 0);
+	wall_time = Math.max(wall_time - 1, 0);
 	
 	// Clear
 	if (game_state != 'load')
