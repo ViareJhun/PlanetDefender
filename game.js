@@ -526,6 +526,7 @@ function preLoad()
 		max_score = 0;
 	}
 	
+	/*
 	running = localStorage.getItem('dioRun' + version);
 	if (running == null)
 	{
@@ -539,7 +540,7 @@ function preLoad()
 		showAd();
 	}
 	localStorage.setItem('dioRun' + version, running);
-	
+	*/
 	tuts = localStorage.getItem('dioTut' + version);
 	if (tuts == null)
 	{
