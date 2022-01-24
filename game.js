@@ -1709,6 +1709,7 @@ function loop()
 }
 
 // Start Game
+vkInit();
 loadTextures();
 audioLoad();
 preLoad();
